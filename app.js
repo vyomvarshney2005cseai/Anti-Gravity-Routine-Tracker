@@ -6,6 +6,15 @@
 (function () {
     'use strict';
 
+    // ── Auth Check ─────────────────────────────
+    function checkAuth() {
+        const loggedIn = localStorage.getItem('ag_logged_in');
+        if (!loggedIn) {
+            window.location.href = 'login.html';
+        }
+    }
+    checkAuth();
+
     const SEED_TASKS = [
         { id: 1, title: 'Morning Flow (Yoga)', time: '07:30', duration: 20, category: 'Wellness', completed: true },
         { id: 2, title: 'Deep Work (Design)', time: '09:00', duration: 90, category: 'Productivity', completed: false },
@@ -622,6 +631,18 @@
        ═══════════════════════════════════════ */
 
     function renderProfile() {
+        // Update user info from localStorage
+        const profileName = document.getElementById('profile-name');
+        const profileEmail = document.getElementById('profile-email');
+        const loggedInRaw = localStorage.getItem('ag_logged_in');
+        if (loggedInRaw) {
+            try {
+                const user = JSON.parse(loggedInRaw);
+                if (profileName) profileName.textContent = user.name || 'Space Traveler';
+                if (profileEmail) profileEmail.textContent = user.email || 'Anti-Gravity Explorer';
+            } catch (e) { }
+        }
+
         // Achievements
         const grid = document.getElementById('achievements-grid');
         if (grid) {
@@ -652,21 +673,31 @@
     // Settings
     const btnReset = document.getElementById('btn-reset');
     const btnClear = document.getElementById('btn-clear-data');
+    const btnLogout = document.getElementById('btn-logout');
+
     if (btnReset) btnReset.addEventListener('click', () => {
         tasks = JSON.parse(JSON.stringify(SEED_TASKS));
         saveTasks();
         refreshAll();
         showToast('🔄 Tasks reset to defaults');
     });
+
     if (btnClear) btnClear.addEventListener('click', () => {
-        if (!confirm('Clear all data? This cannot be undone.')) return;
-        localStorage.clear();
+        if (!confirm('Clear tasks and streak? This cannot be undone.')) return;
+        localStorage.removeItem('ag_tasks');
+        localStorage.removeItem('ag_streak');
         tasks = JSON.parse(JSON.stringify(SEED_TASKS));
         streak = 14;
         saveTasks();
         saveStreak();
         refreshAll();
-        showToast('🗑 All data cleared');
+        showToast('🗑 Routine data cleared');
+    });
+
+    if (btnLogout) btnLogout.addEventListener('click', () => {
+        if (!confirm('Are you sure you want to log out?')) return;
+        localStorage.removeItem('ag_logged_in');
+        window.location.href = 'login.html';
     });
 
     /* ═══════════════════════════════════════
